@@ -52,7 +52,6 @@ func RegistryListTags(image *imagename.ImageName, auth *docker.AuthConfiguration
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get auth token for registry: %s, make sure you are properly logged in using `docker login` or have AWS credentials set in case of using ECR", image)
 	}
-
 	// XXX: AWS ECR Registry API v2 does not support listing tags
 	// wo we just return a single image tag if it exists and no wildcards used
 	if image.IsECR() {
@@ -117,6 +116,10 @@ func registryGet(uri string, auth docker.AuthConfiguration, obj interface{}) (er
 		authTry bool
 	)
 
+	if auth.Username != "" {
+		req.SetBasicAuth(auth.Username, auth.Password)
+	}
+
 	for {
 		if res, err = client.Do(req); err != nil {
 			return fmt.Errorf("Request to %s failed with %s\n", uri, err)
@@ -176,7 +179,6 @@ func getAuthToken(b *bearer, auth docker.AuthConfiguration) (token string, err e
 	if err != nil {
 		return "", fmt.Errorf("Failed to parse real url %s, error %s", b.Realm, err)
 	}
-
 	// Add query params to the ream uri
 	q := uri.Query()
 	q.Set("service", b.Service)
